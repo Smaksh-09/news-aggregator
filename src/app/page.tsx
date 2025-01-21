@@ -1,101 +1,182 @@
-import Image from "next/image";
+"use client";
+import NavBar from "./components/NavBar";
+import Card from "./components/Card";
+import CategoryFilter, { NewsCategory } from "./components/CategoryFilter";
+import { useState, useEffect } from "react";
+import { ChevronDown } from "lucide-react";
+import LoadingSpinner from './components/LoadingSpinner'
+
+import axios from "axios";
+
+interface Article {
+  article: string;
+  title: string;
+  description: string;
+  url: string;
+  urlToImage?: string;
+}
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [category, setCategory] = useState<NewsCategory>('general');
+  const [language, setLanguage] = useState<string>("en"); 
+  const [loading, setLoading] = useState<boolean>(false); 
+  const [originalArticles, setOriginalArticles] = useState<Article[]>([]); 
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+  
+  const fetchNews = async () => {
+    setLoading(true); 
+    try {
+      console.log('Fetching news for category:', category); 
+      const res = await axios.get("https://newsapi.org/v2/top-headlines", {
+        params: {
+          country: "us",
+          category: category,
+          pageSize: 20,
+          apiKey: process.env.NEXT_PUBLIC_NEWS_API_KEY,
+        },
+      });
+
+      console.log('API Response:', res.data); 
+      const validArticles = res.data.articles.filter(
+        (article:Article) => 
+          article.title && 
+          !article.title.includes("[Removed]") && 
+          article.description && 
+          !article.description.includes("[Removed]")
+      );
+
+      console.log(res.data.articles);
+      setArticles(validArticles);
+      setOriginalArticles(validArticles);
+    } catch (error) {
+      console.error("Error fetching news:", error);
+    }
+    setLoading(false); 
+  };
+
+ 
+  const translateText = async (text: string, target: string) => {
+    try {
+      const response = await axios.post("http://localhost:5000/translate", {
+        q: text,
+        source: "en", 
+        target: target,
+      });
+      return response.data.translatedText;
+    } catch (error) {
+      console.error("Error translating text:", error);
+      return text; 
+    }
+  };
+
+  
+  const translateArticles = async (target: string) => {
+    setLoading(true);
+    const translatedArticles = await Promise.all(
+      originalArticles.map(async (article) => {
+        const translatedTitle = await translateText(article.title, target);
+        const translatedDescription = await translateText(article.description, target);
+        return {
+          ...article,
+          title: translatedTitle,
+          description: translatedDescription,
+        };
+      })
+    );
+    setArticles(translatedArticles);
+    setLoading(false); 
+  };
+
+
+  useEffect(() => {
+    console.log('Category changed to:', category); // Debug log
+    fetchNews();
+  }, [category]);
+ 
+  useEffect(() => {
+    console.log("Fetched articles:", articles);
+  }, [articles]);
+
+  const handleLanguageChange = async (newLanguage: string) => {
+    setLanguage(newLanguage); 
+    if (newLanguage === "en") {
+      setArticles(originalArticles); 
+    } else {
+      translateArticles(newLanguage); 
+    }
+  };
+
+
+  const openArticle = (url: string) => {
+    window.open(url, "_blank");
+  };
+
+  return (
+    <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+      <NavBar />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+            <h1 className="text-4xl font-extrabold text-gray-900 dark:text-white">
+              {category.charAt(0).toUpperCase() + category.slice(1)} News
+            </h1>
+            <CategoryFilter
+              selectedCategory={category}
+              onCategoryChange={setCategory}
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+          </div>
+
+          <div className="relative">
+            <label htmlFor="language" className="sr-only">
+              Select Language
+            </label>
+            <div className="relative inline-block">
+              <select
+                id="language"
+                value={language}
+                onChange={(e) => handleLanguageChange(e.target.value)}
+                className="appearance-none bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-lg pl-4 pr-10 py-2 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent hover:border-gray-400 transition-colors duration-200"
+              >
+                <option value="en">🇺🇸 English</option>
+                <option value="es">🇪🇸 Spanish</option>
+                <option value="fr">🇫🇷 French</option>
+                <option value="de">🇩🇪 German</option>
+                <option value="it">🇮🇹 Italian</option>
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-200">
+                <ChevronDown className="h-4 w-4" />
+              </div>
+            </div>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+      </div>
+
+
+      {loading ? (
+        <div className="flex justify-center items-center h-[50vh]">
+          <LoadingSpinner />
+        </div>
+      ) : (
+        <div className="justify-center flex flex-wrap gap-6">
+           {articles.map((article, index) => {
+    const { title, description, urlToImage, url } = article;
+
+    const isValidArticle = title && description && url;
+
+    return isValidArticle ? (
+      <Card
+        key={index}
+        title={title}
+        description={description}
+        imageUrl={urlToImage || "/placeholder-image.png"} 
+        onclick={() => openArticle(url)}
+      />
+    ) : null; 
+  })}
+
+        </div>
+      )}
+    </main>
   );
 }
