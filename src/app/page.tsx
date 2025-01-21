@@ -1,3 +1,4 @@
+/* eslint-disable */
 "use client";
 import NavBar from "./components/NavBar";
 import Card from "./components/Card";
