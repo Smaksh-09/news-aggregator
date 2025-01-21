@@ -5,6 +5,7 @@ import CategoryFilter, { NewsCategory } from "./components/CategoryFilter";
 import { useState, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
 import LoadingSpinner from './components/LoadingSpinner'
+import Button from "./components/Button";
 
 import axios from "axios";
 
@@ -22,10 +23,13 @@ export default function Home() {
   const [language, setLanguage] = useState<string>("en"); 
   const [loading, setLoading] = useState<boolean>(false); 
   const [originalArticles, setOriginalArticles] = useState<Article[]>([]); 
+  const [error, setError] = useState<string | null>(null);
+  const [retrying, setRetrying] = useState<boolean>(false);
 
   
   const fetchNews = async () => {
     setLoading(true); 
+    setError(null);
     try {
       console.log('Fetching news for category:', category); 
       const res = await axios.get("https://newsapi.org/v2/top-headlines", {
@@ -34,6 +38,9 @@ export default function Home() {
           category: category,
           pageSize: 20,
           apiKey: process.env.NEXT_PUBLIC_NEWS_API_KEY,
+        },
+        headers: {
+          'User-Agent': 'news-aggregator/1.0',
         },
       });
 
@@ -49,7 +56,11 @@ export default function Home() {
       console.log(res.data.articles);
       setArticles(validArticles);
       setOriginalArticles(validArticles);
-    } catch (error) {
+    } catch (error: any) {
+      const errorMessage = error.response?.status === 426 
+        ? "API version requires upgrade. Please try again later."
+        : "Failed to fetch news. Please try again.";
+      setError(errorMessage);
       console.error("Error fetching news:", error);
     }
     setLoading(false); 
@@ -156,6 +167,17 @@ export default function Home() {
       {loading ? (
         <div className="flex justify-center items-center h-[50vh]">
           <LoadingSpinner />
+        </div>
+      ) : error ? (
+        <div className="flex flex-col items-center justify-center h-[50vh] space-y-4">
+          <p className="text-red-500 dark:text-red-400 text-lg">{error}</p>
+          <Button 
+            title="Try Again" 
+            onclick={() => {
+              setRetrying(true);
+              fetchNews();
+            }} 
+          />
         </div>
       ) : (
         <div className="justify-center flex flex-wrap gap-6">
