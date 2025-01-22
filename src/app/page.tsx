@@ -36,10 +36,10 @@ export default function Home() {
   const [retrying, setRetrying] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
 
-  
   const fetchNews = async () => {
-    setLoading(true); 
+    setLoading(true);
     setError(null);
+    
     try {
       const response = await fetch(`/api/news?category=${category}`, {
         method: 'GET',
@@ -48,35 +48,47 @@ export default function Home() {
         }
       });
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch news: ${response.status}`);
-      }
-
       const data = await response.json();
       
-      if (data.error) {
-        throw new Error(data.error);
+      if (!response.ok || data.error) {
+        throw new Error(data.details || data.error || 'Failed to fetch news');
       }
 
-      const validArticles = data.results?.filter(
-        (article: Article) => 
-          article.title && 
-          article.description &&
-          !article.title.includes("[Removed]") && 
-          !article.description.includes("[Removed]")
-      ).map((article:Article) => ({
+      if (!data.results || !Array.isArray(data.results)) {
+        throw new Error('Invalid data format received from API');
+      }
+
+      const seenTitles = new Set();
+      const validArticles = data.results.filter(
+        (article: Article) => {
+          if (!article.title || 
+              !article.description || 
+              article.title.includes("[Removed]") || 
+              article.description.includes("[Removed]") ||
+              seenTitles.has(article.title)) {
+            return false;
+          }
+          seenTitles.add(article.title);
+          return true;
+        }
+      ).map((article: Article) => ({
         ...article,
         description: truncateText(article.description, 100)
-      })) || [];
+      }));
+
+      if (validArticles.length === 0) {
+        throw new Error('No valid articles found');
+      }
 
       setArticles(validArticles);
       setOriginalArticles(validArticles);
       
     } catch (error: any) {
+      console.error('Fetch error details:', error);
       setError(error.message || "Failed to fetch news. Please try again.");
-      
+    } finally {
+      setLoading(false);
     }
-    setLoading(false); 
   };
 
  
