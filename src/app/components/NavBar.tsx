@@ -1,5 +1,14 @@
 "use client";
-export default function NavBar(){
+
+interface NavBarProps {
+    onSearch: (query: string) => void;
+}
+
+export default function NavBar({ onSearch }: NavBarProps) {
+    const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+        onSearch(e.target.value);
+    };
+
     return (
         <div className="border-b border-gray-900 bg-gray/80 backdrop-blur-sm fixed w-full top-0 z-50">
             <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -18,8 +27,9 @@ export default function NavBar(){
                             </div>
                             <input
                                 type="search"
-                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-full bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-full bg-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 placeholder="Search news..."
+                                onChange={handleSearch}
                             />
                         </div>
                     </div>

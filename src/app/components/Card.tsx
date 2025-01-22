@@ -1,14 +1,40 @@
 "use client";
+import Image from 'next/image';
+import { useState } from 'react';
+
+
 interface CardProps {
-    title: string;
-    description: string;
-    imageUrl?: string;
-    onclick: () => void;
+  title: string;
+  description: string;
+  imageUrl?: string;
+  onclick: () => void;
 }
+
 export default function Card({ title, description, imageUrl, onclick }: CardProps) {
+  const [imgError, setImgError] = useState(false); 
+  const fallbackImage = '/images/news-logo.svg';
+
+  
+  const validImageUrl = (imageUrl && imageUrl.startsWith('http')) ? imageUrl : fallbackImage;
+
+  const handleImageError = () => {
+    console.log('Image failed to load, using fallback');
+    setImgError(true);
+  };
+
   return (
     <div className="max-w-sm bg-white rounded-lg shadow-md dark:bg-gray-800 dark:border-gray-700 m-4">
-      <img className="rounded-t-lg w-full h-48 object-cover" src={imageUrl} alt={title} />
+      <div className="relative w-full h-48">
+        <Image
+          className="rounded-t-lg object-contain p-2"
+          src={imgError ? fallbackImage : validImageUrl}
+          alt={title}
+          fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          onError={handleImageError}
+          unoptimized
+        />
+      </div>
       <div className="p-5">
         <h5 className="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
           {title}

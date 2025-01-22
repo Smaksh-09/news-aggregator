@@ -11,58 +11,59 @@ import Button from "./components/Button";
 import axios from "axios";
 
 interface Article {
-  article: string;
   title: string;
   description: string;
-  url: string;
-  urlToImage?: string;
+  link: string;
+  image_url?: string;
+  content?: string;
 }
 
 export default function Home() {
   const [articles, setArticles] = useState<Article[]>([]);
-  const [category, setCategory] = useState<NewsCategory>('general');
+  const [category, setCategory] = useState<NewsCategory>("world");
   const [language, setLanguage] = useState<string>("en"); 
   const [loading, setLoading] = useState<boolean>(false); 
   const [originalArticles, setOriginalArticles] = useState<Article[]>([]); 
   const [error, setError] = useState<string | null>(null);
   const [retrying, setRetrying] = useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   
   const fetchNews = async () => {
     setLoading(true); 
     setError(null);
     try {
-      console.log('Fetching news for category:', category); 
-      const res = await axios.get("https://newsapi.org/v2/top-headlines", {
-        params: {
-          country: "us",
-          category: category,
-          pageSize: 20,
-          apiKey: process.env.NEXT_PUBLIC_NEWS_API_KEY,
-        },
+      const response = await fetch(`/api/news?category=${category}`, {
+        method: 'GET',
         headers: {
-          'User-Agent': 'news-aggregator/1.0',
-        },
+          'Content-Type': 'application/json',
+        }
       });
 
-      console.log('API Response:', res.data); 
-      const validArticles = res.data.articles.filter(
-        (article:Article) => 
-          article.title && 
-          !article.title.includes("[Removed]") && 
-          article.description && 
-          !article.description.includes("[Removed]")
-      );
+      if (!response.ok) {
+        throw new Error(`Failed to fetch news: ${response.status}`);
+      }
 
-      console.log(res.data.articles);
+      const data = await response.json();
+      
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      const validArticles = data.results?.filter(
+        (article: Article) => 
+          article.title && 
+          article.description &&
+          !article.title.includes("[Removed]") && 
+          !article.description.includes("[Removed]")
+      ) || [];
+
       setArticles(validArticles);
       setOriginalArticles(validArticles);
+      
     } catch (error: any) {
-      const errorMessage = error.response?.status === 426 
-        ? "API version requires upgrade. Please try again later."
-        : "Failed to fetch news. Please try again.";
-      setError(errorMessage);
-      console.error("Error fetching news:", error);
+      setError(error.message || "Failed to fetch news. Please try again.");
+      
     }
     setLoading(false); 
   };
@@ -81,7 +82,6 @@ export default function Home() {
       return text; 
     }
   };
-
   
   const translateArticles = async (target: string) => {
     setLoading(true);
@@ -124,9 +124,23 @@ export default function Home() {
     window.open(url, "_blank");
   };
 
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    if (!query) {
+      setArticles(originalArticles);
+      return;
+    }
+
+    const filtered = originalArticles.filter(article => 
+      article.title.toLowerCase().includes(query.toLowerCase()) ||
+      article.description.toLowerCase().includes(query.toLowerCase())
+    );
+    setArticles(filtered);
+  };
+
   return (
     <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-      <NavBar />
+      <NavBar onSearch={handleSearch} />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
           <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
@@ -183,17 +197,18 @@ export default function Home() {
       ) : (
         <div className="justify-center flex flex-wrap gap-6">
            {articles.map((article, index) => {
-    const { title, description, urlToImage, url } = article;
+    const { title, description, image_url, link } = article;
+    console.log(`Rendering article ${index}:`, { title, image_url }); // Add this logging
 
-    const isValidArticle = title && description && url;
+    const isValidArticle = title && description && link;
 
     return isValidArticle ? (
       <Card
         key={index}
         title={title}
         description={description}
-        imageUrl={urlToImage || "/placeholder-image.png"} 
-        onclick={() => openArticle(url)}
+        imageUrl={image_url ? image_url.trim() : '/images/news-logo.svg'}
+        onclick={() => openArticle(link)}
       />
     ) : null; 
   })}

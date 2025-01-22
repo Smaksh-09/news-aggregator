@@ -1,6 +1,14 @@
 import { ChangeEvent } from 'react'
 
-export type NewsCategory = 'general' | 'business' | 'technology' | 'entertainment' | 'health' | 'science' | 'sports';
+export type NewsCategory = 
+  'top'
+  | 'world'
+  | 'business'
+  | 'technology'
+  | 'entertainment'
+  | 'sports'
+  | 'science'
+  | 'health';
 
 interface CategoryFilterProps {
   onCategoryChange: (category: NewsCategory) => void;
@@ -8,13 +16,14 @@ interface CategoryFilterProps {
 }
 
 const categories: NewsCategory[] = [
-  'general',
+  'top',
+  'world',
   'business',
   'technology',
   'entertainment',
-  'health',
+  'sports',
   'science',
-  'sports'
+  'health'
 ];
 
 const CategoryFilter = ({ onCategoryChange, selectedCategory }: CategoryFilterProps) => {

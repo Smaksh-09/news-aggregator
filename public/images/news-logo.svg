@@ -1,0 +1,24 @@
+<svg viewBox="0 0 400 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="400" height="200" fill="#1a1a1a"/>
+  
+  <!-- Decorative line -->
+  <line x1="20" y1="160" x2="380" y2="160" stroke="#4d94ff" stroke-width="4"/>
+  
+  <!-- Text elements -->
+  <text x="200" y="100" font-family="Arial" font-size="48" font-weight="bold" text-anchor="middle" fill="#ffffff">
+    Lexi<tspan fill="#4d94ff">News</tspan>
+  </text>
+  
+  <!-- Newspaper icon -->
+  <path d="M320 70 h30 v40 h-30 z" fill="#4d94ff" opacity="0.2"/>
+  <path d="M310 60 h30 v40 h-30 z" fill="#4d94ff"/>
+  <line x1="315" y1="70" x2="335" y2="70" stroke="#1a1a1a" stroke-width="2"/>
+  <line x1="315" y1="75" x2="335" y2="75" stroke="#1a1a1a" stroke-width="2"/>
+  <line x1="315" y1="80" x2="335" y2="80" stroke="#1a1a1a" stroke-width="2"/>
+  
+  <!-- Subtitle -->
+  <text x="200" y="130" font-family="Arial" font-size="16" text-anchor="middle" fill="#cccccc">
+    Your Daily News Source
+  </text>
+</svg>
