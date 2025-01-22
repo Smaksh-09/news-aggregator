@@ -18,6 +18,14 @@ interface Article {
   content?: string;
 }
 
+const truncateText = (text: string, wordLimit: number): string => {
+  const words = text.split(' ');
+  if (words.length > wordLimit) {
+    return words.slice(0, wordLimit).join(' ') + '...';
+  }
+  return text;
+};
+
 export default function Home() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [category, setCategory] = useState<NewsCategory>("world");
@@ -56,7 +64,10 @@ export default function Home() {
           article.description &&
           !article.title.includes("[Removed]") && 
           !article.description.includes("[Removed]")
-      ) || [];
+      ).map((article:Article) => ({
+        ...article,
+        description: truncateText(article.description, 100)
+      })) || [];
 
       setArticles(validArticles);
       setOriginalArticles(validArticles);
