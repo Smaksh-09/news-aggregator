@@ -3,10 +3,13 @@ import { getTranslationApiUrl } from '../config/apiConfig';
 
 export const translateText = async (text: string, target: string) => {
   try {
-    const response = await axios.post(getTranslationApiUrl(), {
-      q: text,
-      source: "en",
-      target: target,
+    const baseUrl = getTranslationApiUrl();
+    const response = await axios.get(`${baseUrl}`, {
+      params: {
+        source: 'auto',
+        target: target,
+        q: text
+      }
     });
     return response.data.translatedText;
   } catch (error) {
