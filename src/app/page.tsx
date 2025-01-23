@@ -9,6 +9,7 @@ import LoadingSpinner from './components/LoadingSpinner'
 import Button from "./components/Button";
 
 import axios from "axios";
+import { translateText } from '../services/translationService';
 
 interface Article {
   title: string;
@@ -91,21 +92,6 @@ export default function Home() {
     }
   };
 
- 
-  const translateText = async (text: string, target: string) => {
-    try {
-      const response = await axios.post("http://localhost:5000/translate", {
-        q: text,
-        source: "en", 
-        target: target,
-      });
-      return response.data.translatedText;
-    } catch (error) {
-      console.error("Error translating text:", error);
-      return text; 
-    }
-  };
-  
   const translateArticles = async (target: string) => {
     setLoading(true);
     const translatedArticles = await Promise.all(
@@ -122,7 +108,6 @@ export default function Home() {
     setArticles(translatedArticles);
     setLoading(false); 
   };
-
 
   useEffect(() => {
     console.log('Category changed to:', category); // Debug log
