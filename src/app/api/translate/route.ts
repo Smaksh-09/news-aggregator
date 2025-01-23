@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { getTranslationApiUrl } from '@/config/apiConfig';
 
-export async function OPTIONS(request: NextRequest) {
+export async function OPTIONS() {
   return new NextResponse(null, {
     headers: {
       'Access-Control-Allow-Origin': '*',
@@ -36,20 +36,21 @@ export async function POST(request: NextRequest) {
         'Access-Control-Allow-Origin': '*',
       }
     });
-  } catch (error: any) {
+  } catch (error) {
+    const axiosError = error as AxiosError;
     console.error('Translation error:', {
-      message: error.message,
-      response: error.response?.data,
-      status: error.response?.status
+      message: axiosError.message,
+      response: axiosError.response?.data,
+      status: axiosError.response?.status
     });
     
     return NextResponse.json(
       { 
         error: 'Translation failed',
-        details: error.response?.data || error.message
+        details: axiosError.response?.data || axiosError.message
       },
       { 
-        status: error.response?.status || 500,
+        status: axiosError.response?.status || 500,
         headers: {
           'Access-Control-Allow-Origin': '*',
         }
